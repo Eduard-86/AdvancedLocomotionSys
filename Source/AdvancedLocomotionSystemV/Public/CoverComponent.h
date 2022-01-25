@@ -44,7 +44,12 @@ protected:
 	float TraceDistence;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interact")
-	float CoverTraceHeight = 150.f;
+	float CoverTraceHeightState = 60.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interact")
+	float CoverTraceHeightCrouch = 40.f;
+
+	float CoverTraceHeightOnMove = CoverTraceHeightState;
 
 public:	
 	
@@ -74,10 +79,16 @@ public:
 	bool MoveForwardInCover(float Value);
 
 	UFUNCTION(BlueprintCallable, Category = "Movable")
-	bool MoveRightInCover(float Value);
+	bool MoveRightInCover(float Value, float TraceHeught);
 
 	UFUNCTION(BlueprintCallable, Category = "Cover")
 	bool ControlIsTakeCover();
+
+	UFUNCTION(BlueprintCallable, Category = "Cover")
+	void SetDefaultValueCoverTraceHeightMoveState();
+
+	UFUNCTION(BlueprintCallable, Category = "Cover")
+	void SetDefaultValueCoverTraceHeightMoveCrouch();
 
 
 	

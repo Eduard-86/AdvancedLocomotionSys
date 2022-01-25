@@ -138,7 +138,7 @@ FHitResult UCoverComponent::RightVectorResultInCover(float value)
 
 	FVector EndHeatVectorR = RightLocation + ForwardVector * TraceDistence;
 
-	EndHeatVectorR.Z = RightLocation.Z = ForwardVector.Z = value;
+	//EndHeatVectorR.Z = RightLocation.Z = ForwardVector.Z = value;
 	
 	GetWorld()->LineTraceSingleByChannel(HitRight, RightLocation,
 		EndHeatVectorR, ECC_Visibility, TraceParams);
@@ -188,7 +188,7 @@ FHitResult UCoverComponent::LefttVectorResultInCover(float value)
 
 	FVector EndHeatVector = LeftLocation + ForwardVector * TraceDistence;
 
-	EndHeatVector.Z = LeftLocation.Z = ForwardVector.Z = value;
+	//EndHeatVector.Z = LeftLocation.Z = ForwardVector.Z = value;
 
 	GetWorld()->LineTraceSingleByChannel(HitLeft, LeftLocation,
 		EndHeatVector, ECC_Visibility, TraceParams);
@@ -326,13 +326,17 @@ void UCoverComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 
 	float SpeedCharacter = SpeedVector.Size();
 
-	GEngine->AddOnScreenDebugMessage(-1, 0.03f, FColor::Red, FString::Printf(TEXT("Sceed - %f"), SpeedCharacter));
+	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Red, FString::Printf(TEXT("Sceed - %f"), SpeedCharacter));
 
 	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Green, 
 		FString::Printf(TEXT("Yaw - %f"), Character->GetController()->GetControlRotation().Yaw));
 
 	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Yellow,
 		FString::Printf(TEXT("Actor Yaw - %f"), Character->GetActorRotation().Yaw > 0 ? Character->GetActorRotation().Yaw : Character->GetActorRotation().Yaw + 360));
+
+	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Yellow,
+		FString::Printf(TEXT("Actor location: Yaw - %f, Pitch - %f, Roll- %f"), 
+			Character->GetActorLocation().Y, Character->GetActorLocation().X, Character->GetActorLocation().Z));
 
 	//FMath::Abs()
 	
@@ -366,6 +370,8 @@ bool UCoverComponent::ControlIsTakeCover()
 
 		CharacterMovement->MaxWalkSpeedCrouched = 300.f;
 		CharacterMovement->MaxWalkSpeed = 300.f;
+
+		//CoverTraceHeightOnMove = CoverTraceHeight;
 		
 		return bCoverToBe;
 	}
@@ -450,7 +456,7 @@ bool UCoverComponent::MoveForwardInCover(float Value)
 	//Character->GetController()->GetControlRotation().Yaw
 }
 
-bool UCoverComponent::MoveRightInCover(float Value)
+bool UCoverComponent::MoveRightInCover(float Value, float TraceHeught)
 {
 	
 	if (Character->Controller != nullptr)
@@ -460,7 +466,7 @@ bool UCoverComponent::MoveRightInCover(float Value)
 		if (Value > 0.0f)
 		{
 
-			Hit = LefttVectorResultInCover(CoverTraceHeight);
+			Hit = LefttVectorResultInCover(TraceHeught);
 
 			if (Hit.bBlockingHit)
 			{
@@ -477,11 +483,9 @@ bool UCoverComponent::MoveRightInCover(float Value)
 				Character->SetActorRotation(YawRotation);
 				
 			}
-			else if(CoverTraceHeight >= 150)
+			
+			else if(LefttVectorResultInCover(CoverTraceHeightCrouch - 20.f).bBlockingHit)
 			{
-				CoverTraceHeight -= 50.f;
-				FHitResult HitCrouch;
-				HitCrouch = LefttVectorResultInCover(CoverTraceHeight);
 				return false;
 			}
 			else
@@ -494,7 +498,7 @@ bool UCoverComponent::MoveRightInCover(float Value)
 		{
 			//GEngine->AddOnScreenDebugMessage(-1, 0.1f, FColor::Red, FString::Printf(TEXT("Sceed - %f"), Value));
 			
-			Hit = RightVectorResultInCover(CoverTraceHeight);
+			Hit = RightVectorResultInCover(TraceHeught);
 
 			if (Hit.bBlockingHit)
 			{
@@ -510,27 +514,29 @@ bool UCoverComponent::MoveRightInCover(float Value)
 				Character->SetActorRotation(YawRotation);
 				
 			}
-			else if (CoverTraceHeight >= 150)
+			else if (RightVectorResultInCover(CoverTraceHeightCrouch - 20.f).bBlockingHit)
 			{
-				CoverTraceHeight -= 50.f;
-				FHitResult HitCrouch;
-				HitCrouch = LefttVectorResultInCover(CoverTraceHeight);
-				
 				return false;
 			}
 			else
 				GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Black,
 					TEXT("back"));
 
-			
-
-			
 		}
 		
 	}
 	return true;
 }
 
+void UCoverComponent::SetDefaultValueCoverTraceHeightMoveState()
+{
+	CoverTraceHeightOnMove = CoverTraceHeightState;
+}
+
+void UCoverComponent::SetDefaultValueCoverTraceHeightMoveCrouch()
+{
+	CoverTraceHeightOnMove = CoverTraceHeightCrouch;
+}
 
 #pragma endregion 
 
