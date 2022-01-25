@@ -326,18 +326,26 @@ void UCoverComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 
 	float SpeedCharacter = SpeedVector.Size();
 
-	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Red, FString::Printf(TEXT("Sceed - %f"), SpeedCharacter));
+	//GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Red, FString::Printf(TEXT("Sceed - %f"), SpeedCharacter));
 
+	float YawController = 0.f;
+	float YawActor = 0.f;
+	float YawrResult = 0.f;
+	
 	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Green, 
-		FString::Printf(TEXT("Yaw - %f"), Character->GetController()->GetControlRotation().Yaw));
+		FString::Printf(TEXT("Yaw - %f"), YawController = Character->GetController()->GetControlRotation().Yaw));
 
 	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Yellow,
-		FString::Printf(TEXT("Actor Yaw - %f"), Character->GetActorRotation().Yaw > 0 ? Character->GetActorRotation().Yaw : Character->GetActorRotation().Yaw + 360));
+		FString::Printf(TEXT("Actor Yaw - %f"), YawActor = Character->GetActorRotation().Yaw > 0 ? Character->GetActorRotation().Yaw : Character->GetActorRotation().Yaw + 360));
 
+	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Red,
+		FString::Printf(TEXT("Result - %f"), YawrResult = YawController - YawActor));
+	
+	/*
 	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Yellow,
 		FString::Printf(TEXT("Actor location: Yaw - %f, Pitch - %f, Roll- %f"), 
 			Character->GetActorLocation().Y, Character->GetActorLocation().X, Character->GetActorLocation().Z));
-
+	*/
 	//FMath::Abs()
 	
 	//GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Blue,FString::Printf(TEXT("Vector Yaw - %f"), Character->GetActorForwardVector().Y));
