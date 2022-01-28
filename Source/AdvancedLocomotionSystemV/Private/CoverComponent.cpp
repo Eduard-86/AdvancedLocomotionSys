@@ -11,6 +11,7 @@
 #include "D:\UE\UE_4.27\Engine\Source\Runtime\Engine\Public\CollisionQueryParams.h"
 #include "D:\UE\UE_4.27\Engine\Source\Runtime\Engine\Classes\Engine\Engine.h"
 #include "Math\Vector.h"
+#include "Kismet/KismetMathLibrary.h"
 
 // Sets default values for this component's properties
 UCoverComponent::UCoverComponent()
@@ -120,7 +121,7 @@ FHitResult UCoverComponent::LetLineBack(float value)
 	return Hit;
 }
 
-FHitResult UCoverComponent::RightVectorResultInCover(float value)
+FHitResult UCoverComponent::RightVectorResultInCover(float height, float width)
 {
 	FHitResult HitRight;
 
@@ -128,7 +129,8 @@ FHitResult UCoverComponent::RightVectorResultInCover(float value)
 
 	FVector Start = Character->GetActorLocation();
 
-	Start.Z += value;
+	Start.Z += height;
+	Start.Y += width;
 
 	auto Capsule = Character->GetCapsuleComponent();
 
@@ -167,7 +169,7 @@ FHitResult UCoverComponent::RightVectorResultInCover(float value)
 	return HitRight;
 }
 
-FHitResult UCoverComponent::LefttVectorResultInCover(float value)
+FHitResult UCoverComponent::LefttVectorResultInCover(float height, float width)
 {
 	FHitResult HitLeft;
 
@@ -175,7 +177,9 @@ FHitResult UCoverComponent::LefttVectorResultInCover(float value)
 
 	FVector Start = Character->GetActorLocation();
 
-	Start.Z += value;
+	Start.Z += height;
+	
+	Start += Character->GetCapsuleComponent()->GetRightVector() * width;
 
 
 	auto Capsule = Character->GetCapsuleComponent();
@@ -336,10 +340,86 @@ void UCoverComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 		FString::Printf(TEXT("Yaw - %f"), YawController = Character->GetController()->GetControlRotation().Yaw));
 
 	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Yellow,
-		FString::Printf(TEXT("Actor Yaw - %f"), YawActor = Character->GetActorRotation().Yaw > 0 ? Character->GetActorRotation().Yaw : Character->GetActorRotation().Yaw + 360));
+		FString::Printf(TEXT("Actor Yaw - %f"), 
+			YawActor = 
+				Character->GetActorRotation().Yaw > 0 ? 
+				Character->GetActorRotation().Yaw : 
+				Character->GetActorRotation().Yaw + 360));
 
 	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Red,
 		FString::Printf(TEXT("Result - %f"), YawrResult = YawController - YawActor));
+
+
+	if (YawrResult > 180)
+	{
+		if (YawController < 180)
+			YawController -= 360;
+
+		else if (YawActor < 180)
+			YawActor -= 360;
+
+		GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Orange,
+			FString::Printf(TEXT("Result - %f"), YawrResult = YawController + YawActor));
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Orange,
+			FString::Printf(TEXT("Result - %f"), YawrResult = YawController - YawActor));
+	}
+
+	
+
+	
+#pragma region WASD
+	
+	
+
+	FHitResult Hit;
+
+	FCollisionQueryParams TraceParams;
+
+	FVector Start = Character->GetActorLocation();
+
+	Start.Z = Start.Z + 20;
+	
+	FVector End = Start + Character->GetActorForwardVector() * (120);
+
+
+	GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, TraceParams);
+	DrawDebugLine(GetWorld(), Start, End, FColor::Blue, false, 0.1);
+
+
+	auto C = Character->GetController()->GetControlRotation().Vector();
+	auto H = Character->GetController()->GetControlRotation().Vector();
+
+	//C.Z = 0;
+
+	if(Hit.bBlockingHit)
+	{
+		H = Hit.Normal * -1;
+		/*
+		GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Blue,
+			FString::Printf(TEXT("Controlle Vector X: %f, Y: %f, Z: %f"),
+				C.X, C.Y, C.Z));
+
+		GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Blue,
+			FString::Printf(TEXT("Actor Vector X: %f, Y: %f, Z: %f"),
+				H.X, H.Y, H.Z));
+		*/
+	}
+
+	float Dch = FVector::DotProduct(C,H); 
+	FVector Cch = FVector::CrossProduct(C,H);
+
+	float Mc = C.Size();
+	float Mh = H.Size();
+
+	float angle = FMath::Acos(Dch / (Mc * Mh)) * Cch.Z * -1 * 100;
+	
+	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Blue,
+		FString::Printf(TEXT("angle : %f"), angle));
+
+#pragma endregion 
 	
 	/*
 	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Yellow,
@@ -349,6 +429,46 @@ void UCoverComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	//FMath::Abs()
 	
 	//GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Blue,FString::Printf(TEXT("Vector Yaw - %f"), Character->GetActorForwardVector().Y));
+
+	
+
+	FVector VectorActorRotation= UKismetMathLibrary::GetRightVector(FRotator(0.0f, Character->GetActorRotation().Yaw, 0.0f));
+
+	FVector VectorControllRotation = UKismetMathLibrary::GetForwardVector(FRotator(0.0f, Character->GetControlRotation().Yaw, 0.0f));
+
+
+	
+	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Blue,
+		FString::Printf(TEXT("Control Rotator: Yaw - %f, Pitch - %f, Roll- %f"),
+			VectorControllRotation.Z, VectorControllRotation.Y, VectorControllRotation.X));
+
+	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Blue,
+		FString::Printf(TEXT("Actor Rotator: Yaw - %f, Pitch - %f, Roll- %f"),
+			VectorActorRotation.Z, VectorActorRotation.Y, VectorActorRotation.X));
+
+
+	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Red,
+		FString::Printf(TEXT("Control Rotator: Yaw - %f, Pitch - %f, Roll- %f"),
+			Character->GetControlRotation().Yaw, Character->GetControlRotation().Pitch, Character->GetControlRotation().Roll));
+	
+	
+	bool bLeftAndRight = UKismetMathLibrary::EqualEqual_VectorVector(VectorActorRotation, VectorControllRotation, 1.f);
+
+	if (bLeftAndRight)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Orange,
+			FString::Printf(TEXT("%i"), bLeftAndRight));
+
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Orange,
+			FString::Printf(TEXT("%i"), bLeftAndRight));
+	}
+
+	
+
+	
 	
 }
 
@@ -376,8 +496,8 @@ bool UCoverComponent::ControlIsTakeCover()
 		Character->SetActorRotation((CoverHits[0].Normal * -1).Rotation());
 		//Character->GetCharacterMovement()->RotationRate = FRotator(0.0f, 0.f, 0.0f);
 
-		CharacterMovement->MaxWalkSpeedCrouched = 300.f;
-		CharacterMovement->MaxWalkSpeed = 300.f;
+		CharacterMovement->MaxWalkSpeedCrouched = 200.f;
+		CharacterMovement->MaxWalkSpeed = 200.f;
 
 		//CoverTraceHeightOnMove = CoverTraceHeight;
 		
@@ -438,15 +558,15 @@ bool UCoverComponent::ControlIsTakeCover()
 
 bool UCoverComponent::MoveForwardInCover(float Value)
 {
-	if ((Character->Controller != nullptr) && (Value != 0.0f))
+	if ((Character->GetController() != nullptr) && (Value != 0.0f))
 	{
-		/*todo Углы камеры относительно актора
-		float ActorYaw = Character->GetActorRotation().Yaw > 0 ? Character->GetActorRotation().Yaw :
-			Character->GetActorRotation().Yaw + 360;
+		const FRotator Rotation = Character->GetController()->GetControlRotation();
+		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
-		float ControllerYaw = Character->GetController()->GetControlRotation().Yaw;
-		*/
+		FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		Character->AddMovementInput(Direction, Value);
 	}
+	
 	if (Value > 0)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Blue,
@@ -545,6 +665,357 @@ void UCoverComponent::SetDefaultValueCoverTraceHeightMoveCrouch()
 {
 	CoverTraceHeightOnMove = CoverTraceHeightCrouch;
 }
+
+float UCoverComponent::ReturnDifference()
+{
+	/*
+	float YawController = 0.f;
+	float YawActor = 0.f;
+	float YawrResult = 0.f;
+
+	YawController = Character->GetController()->GetControlRotation().Yaw;
+
+	YawActor =
+		Character->GetActorRotation().Yaw > 0 ?
+		Character->GetActorRotation().Yaw :
+		Character->GetActorRotation().Yaw + 360;
+
+	YawrResult = YawController - YawActor;
+	
+	if (YawrResult > 180)
+	{
+		if (YawController < 180)
+			YawController -= 360;
+
+		else if (YawActor < 180)
+			YawActor -= 360;
+
+		return YawrResult = YawController + YawActor;
+	}
+	else
+	{
+		return YawrResult = YawController - YawActor;
+	}*/
+
+	FHitResult Hit;
+
+	FCollisionQueryParams TraceParams;
+
+	FVector Start = Character->GetActorLocation();
+
+	Start.Z = Start.Z + 20;
+
+	FVector End = Start + Character->GetActorForwardVector() * (120);
+
+
+	GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, TraceParams);
+	
+	auto C = Character->GetController()->GetControlRotation().Vector();
+	auto H = Character->GetController()->GetControlRotation().Vector();
+
+	//C.Z = 0;
+
+	if (Hit.bBlockingHit)
+	{
+		H = Hit.Normal * -1;
+	}
+
+	float Dch = FVector::DotProduct(C, H);
+	FVector Cch = FVector::CrossProduct(C, H);
+
+	float Mc = C.Size();
+	float Mh = H.Size();
+
+	float angle = FMath::Acos(Dch / (Mc * Mh)) * Cch.Z * -1 * 100;
+
+	return angle;
+}
+
+
+FVector UCoverComponent::Test()
+{
+	
+	return CoverNormal = LetLineFront(60.f).Normal;
+}
+
+bool UCoverComponent::LineTrace(float height, float width)
+{
+	FHitResult HitLeft;
+
+	FCollisionQueryParams TraceParams;
+
+	FVector Start = Character->GetActorLocation();
+
+	Start.Z += height;
+
+
+	auto Capsule = Character->GetCapsuleComponent();
+
+
+	FVector LeftLocation = Start + Capsule->GetRightVector() * width;
+
+
+	FVector ForwardVector = Capsule->GetForwardVector();
+
+	FVector EndHeatVector = LeftLocation + ForwardVector * TraceDistence;
+
+	GetWorld()->LineTraceSingleByChannel(HitLeft, LeftLocation,
+		EndHeatVector, ECC_Visibility, TraceParams);
+	DrawDebugLine(GetWorld(), LeftLocation,
+		EndHeatVector, FColor::Blue, false, 0.1);
+
+	return HitLeft.bBlockingHit;
+}
+
+bool UCoverComponent::MoveInCoverForward_New(float Value, float TraceHeught)
+{
+	FHitResult Hit;
+
+	/*
+	if(
+		LineTrace(height_newmoveR, width_newmoveR) &&
+		LineTrace(height_newmoveL, width_newmoveL))
+	{
+		CharacterMovement->MaxWalkSpeedCrouched = 300.f;
+		CharacterMovement->MaxWalkSpeed = 300.f;
+	}
+	else
+	{
+		CharacterMovement->MaxWalkSpeedCrouched = 100.f;
+		CharacterMovement->MaxWalkSpeed = 100.f;
+	}*/
+
+	FVector VectorActorRotation = UKismetMathLibrary::GetRightVector(FRotator(0.0f, Character->GetActorRotation().Yaw, 0.0f));
+
+	FVector VectorControllRotation = UKismetMathLibrary::GetForwardVector(FRotator(0.0f, Character->GetControlRotation().Yaw, 0.0f));
+
+	bool bLeftAndRight = UKismetMathLibrary::EqualEqual_VectorVector(VectorActorRotation, VectorControllRotation, 1.f);
+
+	
+	if((Character->GetController() != nullptr) && (Value != 0.0f))
+	{
+		
+		if(Value < 0 && !bLeftAndRight)
+		{
+			Hit = LefttVectorResultInCover(CoverTraceHeightOnMove);
+			if(LineTrace(height_newmoveR, width_newmoveR))
+			{
+				CharacterMovement->MaxWalkSpeedCrouched = 300.f;
+				CharacterMovement->MaxWalkSpeed = 300.f;
+			}
+			else
+			{
+				CharacterMovement->MaxWalkSpeedCrouched = 100.f;
+				CharacterMovement->MaxWalkSpeed = 100.f;
+			}
+		}
+
+		else if (Value < 0 && bLeftAndRight)
+		{
+			Hit = RightVectorResultInCover(CoverTraceHeightOnMove);
+			if (LineTrace(height_newmoveL, width_newmoveL))
+			{
+				CharacterMovement->MaxWalkSpeedCrouched = 300.f;
+				CharacterMovement->MaxWalkSpeed = 300.f;
+			}
+			else
+			{
+				CharacterMovement->MaxWalkSpeedCrouched = 100.f;
+				CharacterMovement->MaxWalkSpeed = 100.f;
+			}
+		}
+			
+		else if(Value > 0 && !bLeftAndRight)
+		{
+			Hit = RightVectorResultInCover(CoverTraceHeightOnMove);
+			if (LineTrace(height_newmoveL, width_newmoveL))
+			{
+				CharacterMovement->MaxWalkSpeedCrouched = 300.f;
+				CharacterMovement->MaxWalkSpeed = 300.f;
+			}
+			else
+			{
+				CharacterMovement->MaxWalkSpeedCrouched = 100.f;
+				CharacterMovement->MaxWalkSpeed = 100.f;
+			}			
+		}
+
+		else if (Value > 0 && bLeftAndRight)
+		{
+			Hit = LefttVectorResultInCover(CoverTraceHeightOnMove);
+			if (LineTrace(height_newmoveR, width_newmoveR))
+			{
+				CharacterMovement->MaxWalkSpeedCrouched = 300.f;
+				CharacterMovement->MaxWalkSpeed = 300.f;
+			}
+			else
+			{
+				CharacterMovement->MaxWalkSpeedCrouched = 100.f;
+				CharacterMovement->MaxWalkSpeed = 100.f;
+			}
+		}
+
+		if(Hit.bBlockingHit)
+		{
+			// find out which way is right
+			const FRotator Rotation = Character->GetController()->GetControlRotation();
+			const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+			// get right vector 
+			FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+			// add movement in that direction
+			Character->AddMovementInput(Direction, Value);
+
+			return true;
+		}
+		else
+		{
+			FHitResult NewHit;
+
+			if (Value < 0 && !bLeftAndRight)
+			{
+				NewHit = LefttVectorResultInCover(TraceHeught);
+			}
+
+			else if (Value < 0 && bLeftAndRight)
+			{
+				NewHit = RightVectorResultInCover(TraceHeught);
+			}
+
+			else if (Value > 0 && !bLeftAndRight)
+			{
+				NewHit = RightVectorResultInCover(TraceHeught);
+			}
+
+			else if (Value > 0 && bLeftAndRight)
+			{
+				NewHit = LefttVectorResultInCover(TraceHeught);
+			}
+
+			if (NewHit.bBlockingHit)
+			{
+				CoverTraceHeightOnMove = CoverTraceHeightCrouch;
+				CoverStateValue = CoverState::Crouch;
+
+				return false;
+			}
+			
+		}
+		
+		
+	}
+	
+	return true;
+}
+
+bool UCoverComponent::MoveInCoverRight_New(float Value, float TraceHeught)
+{
+	FHitResult Hit;
+
+	if ((Character->GetController() != nullptr) && (Value != 0.0f))
+	{
+		
+		if (Value < 0)
+		{
+			Hit = RightVectorResultInCover(CoverTraceHeightOnMove);
+			
+			if (Hit.bBlockingHit)
+			{
+
+				if (LineTrace(height_newmoveL, width_newmoveL))
+				{
+					CharacterMovement->MaxWalkSpeedCrouched = 300.f;
+					CharacterMovement->MaxWalkSpeed = 300.f;
+				}
+				else
+				{
+					CharacterMovement->MaxWalkSpeedCrouched = 100.f;
+					CharacterMovement->MaxWalkSpeed = 100.f;
+				}
+			}
+		}
+
+		else if (Value > 0)
+		{
+			Hit = LefttVectorResultInCover(CoverTraceHeightOnMove);
+
+			if (Hit.bBlockingHit)
+			{
+				
+				if (LineTrace(height_newmoveR, width_newmoveR))
+				{
+					CharacterMovement->MaxWalkSpeedCrouched = 300.f;
+					CharacterMovement->MaxWalkSpeed = 300.f;
+				}
+				else
+				{
+					CharacterMovement->MaxWalkSpeedCrouched = 100.f;
+					CharacterMovement->MaxWalkSpeed = 100.f;
+				}
+				
+				
+			}
+		}
+
+		if(Hit.bBlockingHit)
+		{
+			// find out which way is right
+			const FRotator Rotation = (CoverNormal * -1).Rotation();
+			const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+			// get right vector 
+			FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+			// add movement in that direction
+			Character->AddMovementInput(Direction, Value);
+		}
+		else
+		{
+			FHitResult NewHit;
+
+			if (Value < 0)
+			{
+				NewHit = RightVectorResultInCover(TraceHeught);
+			}
+			else if (Value > 0)
+			{
+				NewHit = LefttVectorResultInCover(TraceHeught);
+			}
+
+			if (NewHit.bBlockingHit)
+			{
+				CoverTraceHeightOnMove = CoverTraceHeightCrouch;
+				CoverStateValue = CoverState::Crouch;
+
+				return false;
+			}
+
+		}
+	}
+
+	return true;
+}
+
+// true - state : false - crouch
+void UCoverComponent::SetStateEnum(bool key)
+{
+	if (key)
+		CoverStateValue = CoverState::State;
+	else
+		CoverStateValue = CoverState::Crouch;
+
+
+	
+	if (CoverStateValue == CoverState::State)
+	{
+		CoverTraceHeightOnMove = CoverTraceHeightState;
+	}
+
+	else if (CoverStateValue == CoverState::Crouch)
+	{
+		CoverTraceHeightOnMove = CoverTraceHeightCrouch;
+	}
+}
+
 
 #pragma endregion 
 

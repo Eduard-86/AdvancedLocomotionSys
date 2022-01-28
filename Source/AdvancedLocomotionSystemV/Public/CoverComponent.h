@@ -10,9 +10,9 @@
 UENUM(BlueprintType)
 enum class CoverState : uint8
 {
-	NoCover = 0,
+	State = 0,
 	//FrontCover = 1,
-	InCover = 1
+	Crouch = 1
 
 };
 
@@ -31,6 +31,18 @@ public:
 	CoverState CoverStateValue;
 
 	bool InCover = false;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NewMoveCover")
+	float height_newmoveR = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NewMoveCover")
+	float width_newmoveR = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NewMoveCover")
+	float height_newmoveL = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NewMoveCover")
+	float width_newmoveL = 0;
 
 protected:
 
@@ -51,15 +63,17 @@ protected:
 
 	float CoverTraceHeightOnMove = CoverTraceHeightState;
 
+	FVector_NetQuantizeNormal CoverNormal;
+	
 public:	
 	
 	FHitResult LetLineFront(float value = 0.f);
 
 	FHitResult LetLineBack(float value = 0.f);
 
-	FHitResult RightVectorResultInCover(float value = 0.f);
+	FHitResult RightVectorResultInCover(float height = 0.f, float width = 0.f);
 
-	FHitResult LefttVectorResultInCover(float value = 0.f);
+	FHitResult LefttVectorResultInCover(float height = 0.f, float width = 0.f);
 
 	TArray<FHitResult> IsTakeCover();
 
@@ -90,7 +104,28 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Cover")
 	void SetDefaultValueCoverTraceHeightMoveCrouch();
 
+	UFUNCTION(BlueprintCallable, Category = "Cover")
+	float ReturnDifference();
 
+#pragma region newlaw
+	
+	UFUNCTION(BlueprintCallable, Category = "Cover")
+	FVector Test();
+
+	UFUNCTION(BlueprintCallable, Category = "Trace") 
+	bool LineTrace(float height = 0.f, float width = 0.f);
+
+	UFUNCTION(BlueprintCallable, Category = "Cover")
+	bool MoveInCoverForward_New(float Value, float TraceHeught);
+
+	UFUNCTION(BlueprintCallable, Category = "Cover")
+	bool MoveInCoverRight_New(float Value, float TraceHeught);
+
+	UFUNCTION(BlueprintCallable, Category = "Cover")
+	void SetStateEnum(bool key);
+
+	
+#pragma endregion 
 	
 	
 #pragma endregion 
