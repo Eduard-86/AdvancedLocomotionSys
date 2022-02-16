@@ -6,13 +6,27 @@
 #include "Components/ActorComponent.h"
 #include "CoverComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FLookOutCover);
 
 UENUM(BlueprintType)
 enum class CoverState : uint8
 {
 	State = 0,
 	//FrontCover = 1,
-	Crouch = 1
+	Crouch = 1,
+	Prikol = 1
+
+};
+
+UENUM(BlueprintType)
+enum class AimOnCover : uint8
+{
+	Nope = 0,
+	StateLeft = 1,
+	StateRight = 2,
+	CrounchLeft = 3,
+	CrounchRight = 4,
+	CrounchUp = 5
 
 };
 
@@ -28,7 +42,10 @@ public:
 	UCoverComponent();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera Zoom")
-	CoverState CoverStateValue;
+	CoverState CoverStateEnum;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera Zoom")
+	AimOnCover AimOnCoverEnum;
 
 	bool InCover = false;
 	
@@ -43,6 +60,15 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NewMoveCover")
 	float width_newmoveL = 0;
+
+
+	//UDELEGATE(BlueprintImplementableEvent, Category = "Interaction")
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
+	FLookOutCover look;
+
+	// Right - true, Left - false
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Camera)
+	bool ValueForAimCover = false;
 
 protected:
 
@@ -109,20 +135,35 @@ public:
 
 #pragma region newlaw
 	
+	UFUNCTION(BlueprintCallable)
+	void LookOnCover();
+
 	UFUNCTION(BlueprintCallable, Category = "Cover")
-	FVector Test();
+	FVector GetFrontLineTraceNormalVector();
+
+	UFUNCTION(BlueprintCallable, Category = "Cover")
+	FRotator GetFrontLineTraceNormalRotation();
 
 	UFUNCTION(BlueprintCallable, Category = "Trace") 
 	bool LineTrace(float height = 0.f, float width = 0.f);
 
 	UFUNCTION(BlueprintCallable, Category = "Cover")
-	bool MoveInCoverForward_New(float Value, float TraceHeught);
+	int MoveInCoverForward_New(float Value, float TraceHeught);
 
 	UFUNCTION(BlueprintCallable, Category = "Cover")
-	bool MoveInCoverRight_New(float Value, float TraceHeught);
+	int MoveInCoverRight_New(float Value, float TraceHeught);
 
 	UFUNCTION(BlueprintCallable, Category = "Cover")
 	void SetStateEnum(bool key);
+
+	UFUNCTION(BlueprintCallable, Category = "Cover")
+	int AimCover(bool stay);
+
+	UFUNCTION(BlueprintCallable, Category = "Cover")
+	bool CoverAfterStanding();
+
+	//UFUNCTION(BlueprintCallable, Category = "Cover")
+	//void SetNormanRotation();
 
 	
 #pragma endregion 
