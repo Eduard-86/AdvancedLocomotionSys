@@ -738,7 +738,7 @@ int UCoverComponent::MoveInCoverForward_New(float Value, float TraceHeught)
 				CharacterMovement->MaxWalkSpeed = 100.f;
 			}
 
-			ValueForAimCover = true;
+			ValueForAimCover = 1;
 		}
 
 		else if ((Value < 0 && bLeftAndRight) || (Value > 0 && !bLeftAndRight))
@@ -755,7 +755,7 @@ int UCoverComponent::MoveInCoverForward_New(float Value, float TraceHeught)
 				CharacterMovement->MaxWalkSpeed = 100.f;
 			}
 
-			ValueForAimCover = false;
+			ValueForAimCover = -1;
 		}
 
 		if(Hit.bBlockingHit)
@@ -846,7 +846,7 @@ int UCoverComponent::MoveInCoverRight_New(float Value, float TraceHeught)
 				}
 			}
 
-			ValueForAimCover = false;
+			ValueForAimCover = -1;
 		}
 
 		else if (Value < 0)
@@ -870,7 +870,7 @@ int UCoverComponent::MoveInCoverRight_New(float Value, float TraceHeught)
 				
 			}
 
-			ValueForAimCover = true;
+			ValueForAimCover = 1;
 		}
 
 		if(Hit.bBlockingHit)
@@ -951,7 +951,7 @@ int UCoverComponent::AimCover(bool stay)
 	
 	switch (ValueForAimCover)
 	{
-		case false:
+		case -1:
 		{
 			FHitResult Hit = RightVectorResultInCover(40.f);
 
@@ -970,7 +970,7 @@ int UCoverComponent::AimCover(bool stay)
 			
 		}
 
-		case true:
+		case 1:
 		{
 			FHitResult Hit = LefttVectorResultInCover(40.f);
 
@@ -988,14 +988,14 @@ int UCoverComponent::AimCover(bool stay)
 			}
 		}
 
-		/*
-	default:
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Orange,
-			FString::Printf(TEXT("Суета")));
-		break;
-	}
-		*/
+		
+		default:
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Orange,
+				FString::Printf(TEXT("Суета")));
+			break;
+		}
+		
 	}
 
 	if (stay)

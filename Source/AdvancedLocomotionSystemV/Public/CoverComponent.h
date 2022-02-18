@@ -66,9 +66,9 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FLookOutCover look;
 
-	// Right - true, Left - false
+	// Right - 1, Left - (-1)
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Camera)
-	bool ValueForAimCover = false;
+	int ValueForAimCover = false;
 
 protected:
 
